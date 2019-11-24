@@ -5,6 +5,7 @@ import org.junit.Test;
 import org.vistula.restassured.RestAssuredTest;
 
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 
@@ -28,6 +29,30 @@ public class PetControllerTest extends RestAssuredTest {
                 .body("id", is(1))
                 .body("name", equalTo("Cow"));
     }
+
+    @Test
+    public void shouldGetSecondPet() {
+        Object name = given().get("/pet/2")
+                .then()
+                .log().all()
+                .statusCode(200)
+                .body("id", is(2))
+                .body("name", equalTo("Dog"))
+                .extract().path("name");
+        assertThat(name).isEqualTo("Dog");
+    }
+
+    @Test
+    public void shouldGetNotExistedPet() {
+        int statusCode = given().get("/pet/1000")
+                .then()
+                .log().all()
+                .statusCode(404)
+                .body(equalTo("There is no Pet with such id"))
+                .extract().statusCode();
+        assertThat(statusCode).isEqualTo(404);
+    }
+
 
     @Test
     public void shouldCreateNewPet() {
