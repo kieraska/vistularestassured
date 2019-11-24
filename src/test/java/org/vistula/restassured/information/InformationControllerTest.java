@@ -45,4 +45,12 @@ public class InformationControllerTest extends RestAssuredTest {
                 .body("id", greaterThan(0));
     }
 
+    @Test
+    public void deletePerson() {
+        given().delete("/information/10")
+                .then()
+                .log().all()
+                .statusCode(204);
+    }
+
 }
