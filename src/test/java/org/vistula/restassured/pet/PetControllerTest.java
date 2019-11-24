@@ -1,8 +1,11 @@
 package org.vistula.restassured.pet;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.json.JSONObject;
 import org.junit.Test;
 import org.vistula.restassured.RestAssuredTest;
+
+import java.util.concurrent.ThreadLocalRandom;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -32,14 +35,15 @@ public class PetControllerTest extends RestAssuredTest {
 
     @Test
     public void shouldGetSecondPet() {
-        Object name = given().get("/pet/2")
+        Pet pet = given().get("/pet/2")
                 .then()
                 .log().all()
                 .statusCode(200)
                 .body("id", is(2))
                 .body("name", equalTo("Dog"))
-                .extract().path("name");
-        assertThat(name).isEqualTo("Dog");
+                .extract().body().as(Pet.class);
+        assertThat(pet.getId()).isEqualTo(2);
+        assertThat(pet.getName()).isEqualTo("Dog");
     }
 
     @Test
@@ -57,8 +61,9 @@ public class PetControllerTest extends RestAssuredTest {
     @Test
     public void shouldCreateNewPet() {
         JSONObject requestParams = new JSONObject();
-        requestParams.put("id", 4);
-        requestParams.put("name", "Wolf");
+        int value = ThreadLocalRandom.current().nextInt(20, Integer.MAX_VALUE);
+        requestParams.put("id", value);
+        requestParams.put("name", RandomStringUtils.randomAlphabetic(10));
 
         given().header("Content-Type", "application/json")
                 .body(requestParams.toString())
@@ -66,6 +71,21 @@ public class PetControllerTest extends RestAssuredTest {
                 .then()
                 .log().all()
                 .statusCode(201);
+
+        given().delete("/pet/" + value)
+                .then()
+                .log().all()
+                .statusCode(204);
+    }
+
+    @Test
+    public void shouldDeletePet() {
+        int statusCode = given().delete("/pet/3")
+                .then()
+                .log().all()
+                .statusCode(204)
+                .extract().statusCode();
+        assertThat(statusCode).isEqualTo(204);
     }
 
 }
