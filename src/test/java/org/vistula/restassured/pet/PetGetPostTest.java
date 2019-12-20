@@ -12,7 +12,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 
-public class PetPostTest extends RestAssuredTest {
+public class PetGetPostTest extends RestAssuredTest {
     @Test
     public void shouldGetAddedPet() {
         JSONObject requestParams = new JSONObject();

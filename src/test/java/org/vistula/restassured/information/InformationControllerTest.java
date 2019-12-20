@@ -47,7 +47,7 @@ public class InformationControllerTest extends RestAssuredTest {
 
     @Test
     public void deletePerson() {
-        given().delete("/information/10")
+        given().delete("/information/3")
                 .then()
                 .log().all()
                 .statusCode(204);
