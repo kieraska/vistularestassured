@@ -66,7 +66,7 @@ public class InformationControllerPatchTest extends RestAssuredTest {
     }
 
     @Test
-    public void putPersonWithNotExistingId() {
+    public void patchPersonWithNotExistingId() {
         JSONObject requestParams = new JSONObject();
         String myName = RandomStringUtils.randomAlphabetic(10);
         String myNationality = RandomStringUtils.randomAlphabetic(10);
@@ -83,7 +83,7 @@ public class InformationControllerPatchTest extends RestAssuredTest {
 
         given().header("Content-Type", "application/json")
                 .body(requestParams.toString())
-                .put("/information/" + myId)
+                .patch("/information/" + myId)
                 .then()
                 .log().all()
                 .statusCode(406)
