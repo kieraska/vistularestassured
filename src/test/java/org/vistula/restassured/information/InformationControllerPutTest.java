@@ -40,7 +40,7 @@ public class InformationControllerPutTest extends RestAssuredTest {
 
         long createdPersonId = createNewPerson(requestParams);
 
-        getPerson(createdPersonId, myName, myNationality, mySalary);
+        getAndAssertPerson(createdPersonId, myName, myNationality, mySalary);
 
         Information information = given().header("Content-Type", "application/json")
                 .body(requestParams2.toString())
@@ -59,9 +59,10 @@ public class InformationControllerPutTest extends RestAssuredTest {
         assertThat(information.getNationality()).isEqualTo(myNationality2);
         assertThat(information.getId()).isEqualTo(createdPersonId);
 
-        getPerson(createdPersonId, myName2, myNationality2, mySalary2);
+        getAndAssertPerson(createdPersonId, myName2, myNationality2, mySalary2);
 
         deletePerson(createdPersonId);
+        assertPersonDoesntExist(createdPersonId);
     }
 
 
@@ -74,7 +75,7 @@ public class InformationControllerPutTest extends RestAssuredTest {
         int maxSalary = 5000;
         int minSalary = 1000;
         int mySalary = randomSalary.nextInt((maxSalary - minSalary) + 1) + minSalary;
-        int myId = 100;
+        int myId = 1024;
 
         requestParams.put("name", myName);
         requestParams.put("nationality", myNationality);
@@ -101,8 +102,14 @@ public class InformationControllerPutTest extends RestAssuredTest {
         return id;
     }
 
+    private void assertPersonDoesntExist(long id){
+        given().get("/information/" + id)
+                .then()
+                .log().all()
+                .statusCode(404);
+    }
 
-    private void getPerson(long id, String expectedName, String expectedNationality, int expectedSalary) {
+    private void getAndAssertPerson(long id, String expectedName, String expectedNationality, int expectedSalary) {
         given().get("/information/" + id)
                 .then()
                 .log().all()
@@ -113,7 +120,7 @@ public class InformationControllerPutTest extends RestAssuredTest {
                 .body("salary", equalTo(expectedSalary));
     }
 
-    public void deletePerson(long id) {
+    private void deletePerson(long id) {
         int statusCode = given().delete("/information/" + id)
                 .then()
                 .log().all()
