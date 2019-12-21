@@ -7,47 +7,61 @@ import org.vistula.restassured.RestAssuredTest;
 import org.vistula.restassured.pet.Information;
 
 import java.util.Random;
-import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.LongStream;
 
 import static io.restassured.RestAssured.given;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.Matchers.greaterThan;
+import static org.hamcrest.CoreMatchers.is;
 
 public class InformationControllerPutTest extends RestAssuredTest {
+
     @Test
     public void putPersonWithExistingId() {
         JSONObject requestParams = new JSONObject();
         String myName = RandomStringUtils.randomAlphabetic(10);
         String myNationality = RandomStringUtils.randomAlphabetic(10);
-        Random randomSalary = new Random();
+        Random rnd = new Random();
         int maxSalary = 5000;
         int minSalary = 1000;
-        int mySalary = randomSalary.nextInt((maxSalary - minSalary) + 1) + minSalary;
-        int myId = 2;
+        int mySalary = rnd.nextInt((maxSalary - minSalary) + 1) + minSalary;
 
         requestParams.put("name", myName);
         requestParams.put("nationality", myNationality);
         requestParams.put("salary", mySalary);
-        requestParams.put("id", myId);
+
+        JSONObject requestParams2 = new JSONObject();
+        String myName2 = RandomStringUtils.randomAlphabetic(10);
+        String myNationality2 = RandomStringUtils.randomAlphabetic(10);
+        int mySalary2 = rnd.nextInt((maxSalary - minSalary) + 1) + minSalary;
+
+        requestParams2.put("name", myName2);
+        requestParams2.put("nationality", myNationality2);
+        requestParams2.put("salary", mySalary2);
+
+        long createdPersonId = createNewPerson(requestParams);
+
+        getPerson(createdPersonId, myName, myNationality, mySalary);
 
         Information information = given().header("Content-Type", "application/json")
-                .body(requestParams.toString())
-                .put("/information/" + myId)
+                .body(requestParams2.toString())
+                .put("/information/" + createdPersonId)
                 .then()
                 .log().all()
                 .statusCode(200)
-                .body("nationality", equalTo(myNationality))
-                .body("name", equalTo(myName))
-                .body("salary", equalTo(mySalary))
-                .body("id", equalTo(myId))
+                .body("nationality", equalTo(myNationality2))
+                .body("name", equalTo(myName2))
+                .body("salary", equalTo(mySalary2))
+                .body("id", equalTo((int)createdPersonId))
                 .extract().body().as(Information.class);
 
-        assertThat(information.getName()).isEqualTo(myName);
-        assertThat(information.getSalary()).isEqualTo(mySalary);
-        assertThat(information.getNationality()).isEqualTo(myNationality);
-        assertThat(information.getId()).isEqualTo(myId);
+        assertThat(information.getName()).isEqualTo(myName2);
+        assertThat(information.getSalary()).isEqualTo(mySalary2);
+        assertThat(information.getNationality()).isEqualTo(myNationality2);
+        assertThat(information.getId()).isEqualTo(createdPersonId);
+
+        getPerson(createdPersonId, myName2, myNationality2, mySalary2);
+
+        deletePerson(createdPersonId);
     }
 
 
@@ -75,4 +89,37 @@ public class InformationControllerPutTest extends RestAssuredTest {
                 .statusCode(406)
                 .body(equalTo("ID not found. Please use POST method to create new entries"));
     }
+
+    private long createNewPerson(JSONObject personJSON) {
+        long id = given().header("Content-Type", "application/json")
+                .body(personJSON.toString())
+                .post("/information")
+                .then()
+                .log().all()
+                .statusCode(201)
+                .extract().body().as(Information.class).getId();
+        return id;
+    }
+
+
+    private void getPerson(long id, String expectedName, String expectedNationality, int expectedSalary) {
+        given().get("/information/" + id)
+                .then()
+                .log().all()
+                .statusCode(200)
+                .body("id", is((int)id))
+                .body("name", equalTo(expectedName))
+                .body("nationality", equalTo(expectedNationality))
+                .body("salary", equalTo(expectedSalary));
+    }
+
+    public void deletePerson(long id) {
+        int statusCode = given().delete("/information/" + id)
+                .then()
+                .log().all()
+                .statusCode(204)
+                .extract().statusCode();
+        assertThat(statusCode).isEqualTo(204);
+    }
+
 }
